@@ -116,7 +116,7 @@ resource "aws_vpc_endpoint" "gateway" {
 }
 
 resource "aws_vpc_endpoint" "interface" {
-  for_each = toset(["bedrock-runtime", "textract", "sqs", "logs", "xray"])
+  for_each = toset(["bedrock-runtime", "sqs", "logs", "xray"])
 
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${var.aws_region}.${each.key}"
