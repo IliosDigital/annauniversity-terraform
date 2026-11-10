@@ -1,4 +1,4 @@
-esource "aws_api_gateway_rest_api" "main" {
+resource "aws_api_gateway_rest_api" "main" {
   name        = "${local.name}-api"
   description = "Question paper generation API (${var.environment})"
 
