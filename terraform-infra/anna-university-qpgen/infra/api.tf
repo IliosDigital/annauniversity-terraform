@@ -1,4 +1,4 @@
-resource "aws_api_gateway_rest_api" "main" {
+esource "aws_api_gateway_rest_api" "main" {
   name        = "${local.name}-api"
   description = "Question paper generation API (${var.environment})"
 
@@ -243,19 +243,28 @@ resource "aws_api_gateway_gateway_response" "cors" {
 resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.main.id
 
-  # A new deployment is created whenever a route, model, authorizer or integration changes.
+  # Hash the API Gateway Terraform configuration file itself.
+  # This value is known during planning and remains stable during apply.
+  # It avoids hashing computed provider resource objects that can change
+  # while Terraform is applying the deployment.
   triggers = {
-    redeployment = sha1(jsonencode([
-      aws_api_gateway_authorizer.cognito.id,
-      aws_api_gateway_model.create_textbook.schema,
-      aws_api_gateway_model.create_paper.schema,
-      aws_api_gateway_method.this,
-      aws_api_gateway_integration.this,
-      aws_api_gateway_method.options,
-      aws_api_gateway_integration_response.options,
-      aws_api_gateway_gateway_response.cors,
-    ]))
+    redeployment = filesha1("${path.module}/api_gateway.tf")
   }
+
+  # Ensure all API configuration is created or updated before deployment.
+  depends_on = [
+    aws_api_gateway_authorizer.cognito,
+    aws_api_gateway_request_validator.all,
+    aws_api_gateway_model.create_textbook,
+    aws_api_gateway_model.create_paper,
+    aws_api_gateway_method.this,
+    aws_api_gateway_integration.this,
+    aws_api_gateway_method.options,
+    aws_api_gateway_integration.options,
+    aws_api_gateway_method_response.options,
+    aws_api_gateway_integration_response.options,
+    aws_api_gateway_gateway_response.cors
+  ]
 
   lifecycle {
     create_before_destroy = true
